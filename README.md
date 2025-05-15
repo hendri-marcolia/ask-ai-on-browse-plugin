@@ -92,6 +92,27 @@ askanywhere-ai/
 ├── README.md
 ```
 
+---
+
+## 🔑 Custom Token Integration
+
+This feature allows users to add their own API tokens for Gemini and DeepSeek, enabling them to use these models with AskAnywhere.AI.
+
+### How to Use
+
+1.  **Open the AskAnywhere.AI popup:** Click on the extension icon in your Chrome toolbar.
+2.  **Navigate to the Settings section:** A new "Settings" section will be available in the popup.
+3.  **Enter your API tokens:** Input fields for Gemini and DeepSeek tokens will be provided.
+4.  **Save your tokens:** Click the "Save" button to store your tokens securely.
+
+### Token Storage
+
+Your API tokens are stored securely using Chrome's `storage` API.
+
+### Supported Models
+
+*   **Gemini:** Requires a valid Gemini API token.
+*   **DeepSeek:** Requires a valid DeepSeek API token.
 
 ---
 
@@ -127,12 +148,12 @@ This project is in early-stage ideation. Contributions are welcome, especially i
 
 ---
 
-## 📜 License
-
-[MIT License](LICENSE)
-
----
-
 ## 💬 Inspiration
 
 Built with the philosophy that **AI should be ambient, contextual, and customizable**, AskAnywhere.AI empowers users to tap into intelligence exactly where they need it — no tab switching, no friction.
+
+---
+
+## 📜 License
+
+[MIT License](LICENSE)
