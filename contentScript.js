@@ -14,6 +14,49 @@ function createModal() {
     z-index: 1000;
   `;
 
+  // Add close button
+  const closeButton = document.createElement('span');
+  closeButton.textContent = 'x';
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    font-size: 20px;
+  `;
+  modal.appendChild(closeButton);
+
+  // Drag functionality
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  modal.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    offsetX = e.clientX - modal.offsetLeft;
+    offsetY = e.clientY - modal.offsetTop;
+    modal.style.cursor = 'grab';
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    modal.style.cursor = 'default';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const x = e.clientX - offsetX;
+    const y = e.clientY - offsetY;
+
+    modal.style.left = x + 'px';
+    modal.style.top = y + 'px';
+    modal.style.transform = 'translate(0, 0)';
+  });
+
+  closeButton.addEventListener('click', () => {
+    modal.remove();
+  });
+
   const contextIput = document.createElement('input');
   contextIput.type = 'text';
   contextIput.id = 'ask-ai-context';
