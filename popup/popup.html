@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AskAnywhere.AI Settings</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>AskAnywhere.AI Settings</h2>
+  <label>Select AI Provider:</label>
+  <input type="radio" id="geminiProvider" name="aiProvider" value="gemini">
+  <label for="geminiProvider">Gemini</label><br>
+  <input type="radio" id="deepseekProvider" name="aiProvider" value="deepseek">
+  <label for="deepseekProvider">DeepSeek</label><br>
+  <label for="apiToken">API Token:</label>
+  <input type="text" id="apiToken" name="apiToken">
+  <button id="saveButton">Save</button>
+  <script src="popup.js"></script>
+</body>
+</html>

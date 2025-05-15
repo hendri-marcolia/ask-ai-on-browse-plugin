@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "AskAnywhere.AI",
+  "version": "0.1",
+  "description": "Contextual AI Assistant for the Web",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "nativeMessaging",
+    "declarativeContent"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "contentScript.js",
+        "marked.min.js"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+    }
+  },
+  "icons": {
+  }
+}
