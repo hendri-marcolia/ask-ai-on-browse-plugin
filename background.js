@@ -4,6 +4,7 @@ async function geminiHandler(request) {
   // request.text is the question asked by the user
   // request.selectedText is the selected text on the page (optional)
   query = request.text;
+  metadata = request.metadata;
   console.log("Gemini API request:", query);
   const geminiToken = await chrome.storage.sync.get(['apiToken']).then((result) => result.apiToken);
 
@@ -15,7 +16,7 @@ async function geminiHandler(request) {
     if (result.role) {
       return result.role;
     } else { 
-      return "You are a helpful assistant helping to answer user questions with a detailed and trying to helpful. User may provide additional context to the question.";
+      return "You are an expert AI assistant. Use the highlighted text and any available context (such as page content,title and metadata or user input) to deliver a clear, accurate, and actionable response. Prioritize relevance, professionalism, and usefulness.";
     }
   }
   );
@@ -52,6 +53,11 @@ async function geminiHandler(request) {
     data.contents[0].parts.push({
       "text": "Context: " + request.selectedText
     });
+  }
+  if (metadata) {
+    data.contents[0].parts.push({
+      "text": "Metadata: " + JSON.stringify(metadata)
+    })
   }
 
   try {
@@ -122,12 +128,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // request.selectedText is the selected text on the page (optional)
       console.log("Received request:", request);
       if (request.action === "send-ask-ai") {
-        console.log("Received ask-ai request:", request);
         // Check if the request has the required properties
         selectedText = request.selectedText;
         chrome.tabs.sendMessage(sender.tab.id, {
           action: "ask-ai-ui",
-          selectedText: selectedText
+          selectedText: selectedText,
+          metadata: request.metadata,
         }, function(contentScriptResponse) {
           if (chrome.runtime.lastError) {
             console.error("Error sending message:", chrome.runtime.lastError.message);
@@ -183,13 +189,32 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
   if (info.menuItemId === "ask-ai") {
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      function: () => {
+      args: [tab.url],
+      function: (pageUrl) => {
         // This code will be executed in the content script
         const selectedText = window.getSelection().toString();
+        // get Current tab url for role selection later
+        const url = new URL(pageUrl);
+        const domain = url.hostname;
+
+        // Extract metadata
+        let document = window.document;
+        let title = document.title;
+        let description = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+        let keywords = document.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
+
+
         
         chrome.runtime.sendMessage({
             action: "send-ask-ai",
-            selectedText: selectedText
+            selectedText: selectedText,
+            metadata: {
+              domain: domain,
+              url: url,
+              title: title,
+              description: description,
+              keywords: keywords,
+            }
           }, function(response) {
             if (chrome.runtime.lastError) {
               console.error("Error sending message:", chrome.runtime.lastError.message);

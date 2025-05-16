@@ -105,6 +105,7 @@ chrome.runtime.onMessage.addListener(
     if (request.action === "ask-ai-ui") {
       // get selected text if any from request
       const selectedText = request.selectedText;
+      const metadata = request.metadata;
       
       // create modal if it doesn't exist
       if (!document.getElementById('ask-ai-modal')) {
@@ -125,7 +126,8 @@ chrome.runtime.onMessage.addListener(
         chrome.runtime.sendMessage({
           action: "ask-ai",
           text: question,
-          selectedText: selectedText
+          selectedText: selectedText,
+          metadata: metadata,
         }, function(response) {
           if (chrome.runtime.lastError) {
             console.error("Error sending message:", chrome.runtime.lastError.message);
