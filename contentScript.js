@@ -8,34 +8,107 @@ function createModal() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: white;
-    border: 1px solid black;
+    width: 500px;
+    max-width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     padding: 20px;
-    z-index: 1000;
+    z-index: 10000;
+    font-family: Arial, sans-serif;
   `;
 
-  // Add close button
+  // Close button
   const closeButton = document.createElement('span');
-  closeButton.textContent = 'x';
+  closeButton.textContent = '×';
+  closeButton.setAttribute('aria-label', 'Close');
   closeButton.style.cssText = `
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 10px;
+    right: 15px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 24px;
+    color: #888;
   `;
+  closeButton.addEventListener('click', () => modal.remove());
   modal.appendChild(closeButton);
 
-  // Drag functionality
+  // Context display
+  const contextInput = document.createElement('input');
+  contextInput.type = 'text';
+  contextInput.id = 'ask-ai-context';
+  contextInput.placeholder = 'No context selected';
+  contextInput.value = 'No context selected';
+  contextInput.disabled = true;
+  contextInput.style.cssText = `
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  `;
+  modal.appendChild(contextInput);
+
+  // Response container
+  const responseDiv = document.createElement('div');
+  responseDiv.id = 'ask-ai-response';
+  responseDiv.style.cssText = `
+    margin-top: 10px;
+  `;
+  modal.appendChild(responseDiv);
+
+  // Loading container
+  const loadingEl = document.createElement('div');
+  loadingEl.id = "loading-placeholder"
+  loadingEl.textContent = "Thinking ...";
+  loadingEl.style.cssText = 'font-style: italic; color: gray; display: none;';
+  modal.appendChild(loadingEl);
+
+  // Question textarea
+  const questionInput = document.createElement('textarea');
+  questionInput.id = 'ask-ai-question';
+  questionInput.placeholder = 'Ask your question...';
+  questionInput.style.cssText = `
+    width: 100%;
+    height: 80px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    margin-bottom: 12px;
+    font-size: 14px;
+  `;
+  modal.appendChild(questionInput);
+
+  // Submit button
+  const submitButton = document.createElement('button');
+  submitButton.textContent = 'Ask AI';
+  submitButton.style.cssText = `
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 16px;
+  `;
+  modal.appendChild(submitButton);
+
+  // Dragging
   let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
+  let offsetX = 0, offsetY = 0;
 
   modal.addEventListener('mousedown', (e) => {
+    if (e.target !== modal && e.target !== contextInput) return;
     isDragging = true;
     offsetX = e.clientX - modal.offsetLeft;
     offsetY = e.clientY - modal.offsetTop;
-    modal.style.cursor = 'grab';
+    modal.style.cursor = 'move';
   });
 
   document.addEventListener('mouseup', () => {
@@ -45,60 +118,14 @@ function createModal() {
 
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    const x = e.clientX - offsetX;
-    const y = e.clientY - offsetY;
-
-    modal.style.left = x + 'px';
-    modal.style.top = y + 'px';
+    modal.style.left = `${e.clientX - offsetX}px`;
+    modal.style.top = `${e.clientY - offsetY}px`;
     modal.style.transform = 'translate(0, 0)';
   });
 
-  closeButton.addEventListener('click', () => {
-    modal.remove();
-  });
-
-  const contextIput = document.createElement('input');
-  contextIput.type = 'text';
-  contextIput.id = 'ask-ai-context';
-  contextIput.placeholder = 'No context selected';
-  contextIput.value = 'No context selected';
-  contextIput.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  `;
-  // disable context input
-  contextIput.disabled = true;
-  modal.appendChild(contextIput);
-
-
-  const questionInput = document.createElement('input');
-  questionInput.type = 'text';
-  questionInput.id = 'ask-ai-question';
-  questionInput.placeholder = 'Ask your question...';
-
-  const submitButton = document.createElement('button');
-  submitButton.textContent = 'Ask';
-  submitButton.style.cssText = `
-    margin-top: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-  `;
-
-  const responseDiv = document.createElement('div');
-  responseDiv.id = 'ask-ai-response';
-
-  modal.appendChild(questionInput);
-  modal.appendChild(submitButton);
-  modal.appendChild(responseDiv);
-
   return modal;
 }
+
 
 function parseQuestionsBlock(document) {
   const blocks = document.querySelectorAll('#ask-ai-response .qa-block');
@@ -142,10 +169,15 @@ chrome.runtime.onMessage.addListener(
 
       const questionInput = document.getElementById('ask-ai-question');
       const submitButton = document.querySelector('#ask-ai-modal button');
+      const loadingEl = document.getElementById('loading-placeholder');
       // const responseDiv = document.getElementById('ask-ai-response');
 
       submitButton.addEventListener('click', () => {
         const question = questionInput.value;
+        loadingEl.style.display = 'block';
+        questionInput.disabled = true;
+        questionInput.value = '';
+        submitButton.disabled = true;
 
         const conversationHistory = parseQuestionsBlock(document);
         chrome.runtime.sendMessage({
@@ -160,6 +192,9 @@ chrome.runtime.onMessage.addListener(
           } else {
             console.log("Response from background script:", response);
           }
+          loadingEl.style.display = 'none';
+          questionInput.disabled = false;
+          submitButton.disabled = false;
         });
       });
     } else if (request.action === "ask-ai-response") {
@@ -167,6 +202,8 @@ chrome.runtime.onMessage.addListener(
 
       if (responseDiv && request?.question && request?.response) {
         // Create a container for the Q&A pair
+        const loadingEl = document.getElementById('loading-placeholder');
+        loadingEl.style.display = 'none';
         const qaContainer = document.createElement('div');
         qaContainer.classList.add('qa-block');
         qaContainer.style.cssText = `

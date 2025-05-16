@@ -26,7 +26,7 @@ async function geminiHandler(request) {
       if (result.role) {
         return result.role;
       } else { 
-        return "You are an expert AI assistant. Use the highlighted text and any available context (such as page content,title and metadata or user input) to deliver a clear, accurate, and actionable response. Prioritize relevance, professionalism, and usefulness.";
+        return "You are an expert AI assistant. Use the highlighted text and any available context and metadata (such as page content,title and metadata or user input) to deliver a clear, accurate, and actionable response. Prioritize relevance, professionalism, and usefulness.";
       }
     }
   );
@@ -52,7 +52,7 @@ async function geminiHandler(request) {
     "system_instruction": {
       "parts": [
         {
-          "text": role
+          "text": sitePromptMap[metadata.domain] || role
         }
       ]
     },
@@ -62,7 +62,7 @@ async function geminiHandler(request) {
       //   "Title"
       // ],
       "temperature": 0.0,
-      "maxOutputTokens": 500,
+      "maxOutputTokens": 1000,
       "topP": 0.8,
       "topK": 10
     }
