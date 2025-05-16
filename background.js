@@ -1,4 +1,13 @@
 console.log("Background script running");
+const sitePromptMap = {
+  "stackoverflow.com": "You are a senior software engineer answering technical coding questions with concise, accurate solutions. Reference relevant code and best practices.",
+  "github.com": "You are a GitHub code reviewer. Provide clear, constructive, and concise code analysis and suggestions.",
+  "wikipedia.org": "You are an academic researcher summarizing and clarifying historical or scientific facts with neutrality and citations if needed.",
+  "medium.com": "You are a writing assistant summarizing and analyzing blog posts with insights, highlights, and takeaways.",
+  "youtube.com": "You are a video content summarizer. Help describe or summarize what this video is about, based on the title and surrounding text.",
+  "amazon.com": "You are an e-commerce analyst. Summarize product features, compare alternatives, and highlight key purchase considerations.",
+  // Add more as needed...
+};
 
 async function geminiHandler(request) {
   // request.text is the question asked by the user
@@ -7,19 +16,36 @@ async function geminiHandler(request) {
   metadata = request.metadata;
   console.log("Gemini API request:", query);
   const geminiToken = await chrome.storage.sync.get(['apiToken']).then((result) => result.apiToken);
+  const conversationHistory = request.conversationHistory || []
 
   if (!geminiToken) {
     throw new Error('Gemini API token not found. Please enter it in the settings.');
   }
   // Check role or use default
   const role = await chrome.storage.sync.get(['role']).then((result) => {
-    if (result.role) {
-      return result.role;
-    } else { 
-      return "You are an expert AI assistant. Use the highlighted text and any available context (such as page content,title and metadata or user input) to deliver a clear, accurate, and actionable response. Prioritize relevance, professionalism, and usefulness.";
+      if (result.role) {
+        return result.role;
+      } else { 
+        return "You are an expert AI assistant. Use the highlighted text and any available context (such as page content,title and metadata or user input) to deliver a clear, accurate, and actionable response. Prioritize relevance, professionalism, and usefulness.";
+      }
     }
-  }
   );
+  newQuestion = []
+  if (request.selectedText) {
+    newQuestion.push({
+      "text": "Context: " + request.selectedText
+    });
+  }
+  if (metadata) {
+    newQuestion.push({
+      "text": "Metadata: " + JSON.stringify(metadata)
+    })
+  }
+  newQuestion.push({
+    "text": "Question: " + query,
+  })
+  conversationHistory.push({role: "user", parts: newQuestion})
+  console.log(conversationHistory)
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiToken}`;
   const data = {
@@ -30,35 +56,17 @@ async function geminiHandler(request) {
         }
       ]
     },
-    "contents": [
-      {
-        "parts": [
-          {
-            "text": "Question: " + query
-          }
-        ]
-      }
-    ],
+    "contents": conversationHistory,
     "generationConfig": {
-      "stopSequences": [
-        "Title"
-      ],
+      // "stopSequences": [
+      //   "Title"
+      // ],
       "temperature": 0.0,
       "maxOutputTokens": 500,
       "topP": 0.8,
       "topK": 10
     }
   };
-  if (request.selectedText) {
-    data.contents[0].parts.push({
-      "text": "Context: " + request.selectedText
-    });
-  }
-  if (metadata) {
-    data.contents[0].parts.push({
-      "text": "Metadata: " + JSON.stringify(metadata)
-    })
-  }
 
   try {
     const response = await fetch(url, {
@@ -157,6 +165,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // Send the response back to the content script
       chrome.tabs.sendMessage(sender.tab.id, {
         action: "ask-ai-response",
+        question: request.text,
         response: response
       }, function(contentScriptResponse) {
         if (chrome.runtime.lastError) {

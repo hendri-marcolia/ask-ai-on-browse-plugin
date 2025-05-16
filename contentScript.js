@@ -89,7 +89,7 @@ function createModal() {
     padding: 10px 20px;
     cursor: pointer;
   `;
-  
+
   const responseDiv = document.createElement('div');
   responseDiv.id = 'ask-ai-response';
 
@@ -100,13 +100,37 @@ function createModal() {
   return modal;
 }
 
+function parseQuestionsBlock(document) {
+  const blocks = document.querySelectorAll('#ask-ai-response .qa-block');
+  const conversationHistory = [];
+
+  blocks.forEach(block => {
+    const question = block.querySelector('.qa-question')?.textContent?.trim();
+    const answer = block.querySelector('.qa-answer')?.textContent?.trim();
+
+    if (question) {
+      conversationHistory.push({
+        role: "user",
+        parts: [{ text: question }]
+      });
+    }
+    if (answer) {
+      conversationHistory.push({
+        role: "model",
+        parts: [{ text: answer }]
+      });
+    }
+  });
+  return conversationHistory;
+}
+
 chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
+  function (request, sender, sendResponse) {
     if (request.action === "ask-ai-ui") {
       // get selected text if any from request
       const selectedText = request.selectedText;
       const metadata = request.metadata;
-      
+
       // create modal if it doesn't exist
       if (!document.getElementById('ask-ai-modal')) {
         const modal = createModal();
@@ -118,17 +142,19 @@ chrome.runtime.onMessage.addListener(
 
       const questionInput = document.getElementById('ask-ai-question');
       const submitButton = document.querySelector('#ask-ai-modal button');
-      const responseDiv = document.getElementById('ask-ai-response');
+      // const responseDiv = document.getElementById('ask-ai-response');
 
       submitButton.addEventListener('click', () => {
         const question = questionInput.value;
 
+        const conversationHistory = parseQuestionsBlock(document);
         chrome.runtime.sendMessage({
           action: "ask-ai",
           text: question,
           selectedText: selectedText,
           metadata: metadata,
-        }, function(response) {
+          conversationHistory: conversationHistory,
+        }, function (response) {
           if (chrome.runtime.lastError) {
             console.error("Error sending message:", chrome.runtime.lastError.message);
           } else {
@@ -138,19 +164,46 @@ chrome.runtime.onMessage.addListener(
       });
     } else if (request.action === "ask-ai-response") {
       const responseDiv = document.getElementById('ask-ai-response');
-      if (responseDiv) {
-        // append the response to the response div
-        const responseText = document.createElement('div');
-        responseText.innerHTML = marked.parse(request.response);
-        responseText.style.cssText = `
-          margin: 0;
+
+      if (responseDiv && request?.question && request?.response) {
+        // Create a container for the Q&A pair
+        const qaContainer = document.createElement('div');
+        qaContainer.classList.add('qa-block');
+        qaContainer.style.cssText = `
+          margin-bottom: 16px;
           padding: 10px;
-          background-color: #f1f1f1;
-          border-radius: 4px;
-          margin-top: 10px;
+          background: #ffffff;
+          border: 1px solid #ddd;
+          border-radius: 6px;
         `;
-        responseDiv.appendChild(responseText);
+
+        // Question block
+        const questionEl = document.createElement('div');
+        questionEl.classList.add('qa-question');
+        questionEl.textContent = request.question;
+        questionEl.style.cssText = `
+          font-weight: bold;
+          margin-bottom: 6px;
+        `;
+
+        // Answer block
+        const answerEl = document.createElement('div');
+        answerEl.classList.add('qa-answer');
+        answerEl.innerHTML = marked.parse(request.response);
+        answerEl.style.cssText = `
+          background-color: #f1f1f1;
+          padding: 10px;
+          border-radius: 4px;
+        `;
+
+        // Append question and answer to container
+        qaContainer.appendChild(questionEl);
+        qaContainer.appendChild(answerEl);
+
+        // Append to main response div
+        responseDiv.appendChild(qaContainer);
       }
+
     }
     return true
   }
