@@ -251,7 +251,7 @@ chrome.runtime.onMessage.addListener(
           ) {
             activeElement.value = result
           } else if (activeElement.isContentEditable) {
-            activeElement.textContent = result
+            activeElement.innerText = result
           }
         }
         if (activeElement.id.startsWith("plugin-element-to-rephrase")) {

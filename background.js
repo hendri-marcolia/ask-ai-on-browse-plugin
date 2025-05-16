@@ -105,7 +105,7 @@ async function geminiRephraseHandler(request) {
     if (result.role) {
       return result.role;
     } else {
-      return "You are a writing assistant. Rewrite the following sentence to make it clearer and more natural for a native English speaker. Do not interpret it as a question or provide an answer — only improve the wording. Output only the best result you think is. **IMPORTANT** No other text, only the result as output";
+      return "You are a writing assistant. Rewrite the following sentence to make it clearer and more natural for a native English speaker. Do not interpret it as a question or provide an answer — only improve the wording. Output only the best result you think is. **IMPORTANT** No other text, only the result as output, no need qouting";
     }
   }
   );
@@ -356,8 +356,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
             }
             selectedText = activeElement.value.substring(start, end);
           } else if (activeElement.isContentEditable) {
-            console.log(activeElement)
-            selectedText = activeElement.textContent
+            selectedText = activeElement.innerText
           }
         }
         chrome.runtime.sendMessage({
