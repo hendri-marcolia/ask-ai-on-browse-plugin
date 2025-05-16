@@ -241,6 +241,22 @@ chrome.runtime.onMessage.addListener(
         responseDiv.appendChild(qaContainer);
       }
 
+    }else if (request.action === 'rephrase-ai-result') {
+      let {result, activeElementId} = request
+      const activeElement = document.getElementById(activeElementId)
+      if (activeElement) {
+          if (
+            activeElement.tagName === 'TEXTAREA' ||
+            (activeElement.tagName === 'INPUT' && activeElement.type === 'text')
+          ) {
+            activeElement.value = result
+          } else if (activeElement.isContentEditable) {
+            activeElement.textContent = result
+          }
+        }
+        if (activeElement.id.startsWith("plugin-element-to-rephrase")) {
+          activeElement.removeAttribute('id');
+        }
     }
     return true
   }
