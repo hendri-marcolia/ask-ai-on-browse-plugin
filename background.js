@@ -1,13 +1,4 @@
 console.log("Background script running");
-const sitePromptMap = {
-  "stackoverflow.com": "You are a senior software engineer answering technical coding questions with concise, accurate solutions. Reference relevant code and best practices.",
-  "github.com": "You are a GitHub code reviewer. Provide clear, constructive, and concise code analysis and suggestions.",
-  "wikipedia.org": "You are an academic researcher summarizing and clarifying historical or scientific facts with neutrality and citations if needed.",
-  "medium.com": "You are a writing assistant summarizing and analyzing blog posts with insights, highlights, and takeaways.",
-  "youtube.com": "You are a video content summarizer. Help describe or summarize what this video is about, based on the title and surrounding text.",
-  "amazon.com": "You are an e-commerce analyst. Summarize product features, compare alternatives, and highlight key purchase considerations.",
-  // Add more as needed...
-};
 
 async function geminiHandler(request) {
   // request.text is the question asked by the user
@@ -48,12 +39,25 @@ async function geminiHandler(request) {
   conversationHistory.push({ role: "user", parts: newQuestion })
   // console.log(conversationHistory)
 
+  const sitePrompt = await chrome.storage.sync.get({ sites: [] }).then((data) => {
+    var sites = data.sites;
+    var existingSiteIndex = sites.findIndex(function(site) {
+        return site.domain === metadata.domain;
+    });
+
+    if (existingSiteIndex !== -1) {
+      return sites[existingSiteIndex].rolePrompt;
+    }else {
+      return undefined;
+    }
+  });
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiToken}`;
   const data = {
     "system_instruction": {
       "parts": [
         {
-          "text": sitePromptMap[metadata.domain] || role
+          "text": sitePrompt || role
         }
       ]
     },
@@ -68,7 +72,7 @@ async function geminiHandler(request) {
       "topK": 10
     }
   };
-
+  
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -327,7 +331,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
       function: (pageUrl) => {
         // get Current tab url for role selection later
         const url = new URL(pageUrl);
-        const domain = url.hostname;
+        const domain = url.hostname.replace("www.", "");
 
         // Extract metadata
         let document = window.document;
@@ -383,7 +387,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
         const selectedText = window.getSelection().toString();
         // get Current tab url for role selection later
         const url = new URL(pageUrl);
-        const domain = url.hostname;
+        const domain = url.hostname.replace("www.", "");
 
         // Extract metadata
         let document = window.document;
