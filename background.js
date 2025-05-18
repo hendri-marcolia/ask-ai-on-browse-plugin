@@ -342,7 +342,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
         // Get focused inputfield
         const activeElement = document.activeElement;
         if (!activeElement.id) {
-          activeElement.id = 'plugin-element-to-rephrase' // Add UUID
+          activeElement.id = 'plugin-element-to-rephrase-' + crypto.randomUUID(); // Add UUID
         }
         const activeElementId = activeElement.id || '';
         let selectedText = '';
