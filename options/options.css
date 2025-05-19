@@ -45,16 +45,3 @@ button:hover {
 #status.error {
     color: red;
 }
-
-.rephrase-ai-button {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 2px 5px;
-  font-size: 10px;
-  cursor: pointer;
-  z-index: 1;
-}

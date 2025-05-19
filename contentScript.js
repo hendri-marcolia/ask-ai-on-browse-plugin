@@ -9,13 +9,20 @@ function createRephraseButton(element) {
     position: absolute;
     bottom: 2px;
     right: 2px;
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 2px 5px;
-    font-size: 10px;
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    font-family: sans-serif;
     cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 1;
+    transition: background-color 0.3s ease;
   `;
   button.textContent = 'Rephrase';
 
