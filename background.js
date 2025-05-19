@@ -353,12 +353,13 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
             (activeElement.tagName === 'INPUT' && activeElement.type === 'text')
           ) {
             // Get selected text from textarea/input
-            let start = activeElement.selectionStart;
-            const end = activeElement.selectionEnd;
-            if (start === end) {
-              start = 0; // no selected 
-            }
-            selectedText = activeElement.value.substring(start, end);
+            // let start = activeElement.selectionStart;
+            // const end = activeElement.selectionEnd;
+            // if (start === end) {
+            //   start = 0; // no selected 
+            // }
+            // selectedText = activeElement.value.substring(start, end);
+            selectedText = activeElement.value;
           } else if (activeElement.isContentEditable) {
             selectedText = activeElement.innerText
           }

@@ -1,5 +1,71 @@
 console.log("Content script running");
 
+// Function to create the rephrase button
+function createRephraseButton(element) {
+  const button = document.createElement('button');
+  button.classList.add('rephrase-ai-button');
+  button.type = "button";
+  button.style.cssText = `
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 10px;
+    cursor: pointer;
+    z-index: 1;
+  `;
+  button.textContent = 'Rephrase';
+
+  button.addEventListener('click', (event) => {
+    event.stopPropagation(); // Prevent the click from affecting the input field
+
+    // Add a unique ID to the active element
+    const activeElement = element;
+    if (!activeElement.id) {
+      activeElement.id = 'plugin-element-to-rephrase-' + crypto.randomUUID(); // Add UUID
+    }
+
+    chrome.runtime.sendMessage({
+      action: "rephrase-ai",
+      selectedText: element.value || element.innerText,
+      activeElementId: activeElement.id
+    }, function (response) {
+      if (chrome.runtime.lastError) {
+        console.error("Error sending message:", chrome.runtime.lastError.message);
+      } else {
+        console.log("Response from background script:", response);
+      }
+    });
+  });
+
+  return button;
+}
+
+// Function to inject the rephrase button into editable elements
+function injectRephraseButton(element) {
+  if (element.tagName === 'TEXTAREA' ||
+      (element.tagName === 'INPUT' && element.type === 'text') ||
+      element.isContentEditable) {
+
+    // Ensure the element has relative positioning
+    if (window.getComputedStyle(element).position === 'static') {
+      element.style.position = 'relative';
+    }
+
+    const button = createRephraseButton(element);
+    element.parentNode.appendChild(button);
+  }
+}
+
+// Function to find and inject buttons into all editable elements
+function addRephraseButtons() {
+  const editableElements = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"]');
+  editableElements.forEach(injectRephraseButton);
+}
+
 function createModal() {
   const modal = document.createElement('div');
   modal.id = 'ask-ai-modal';
@@ -261,3 +327,10 @@ chrome.runtime.onMessage.addListener(
     return true
   }
 );
+
+// Add rephrase buttons when the content script is loaded
+addRephraseButtons();
+
+// // Observe DOM changes and add rephrase buttons to new elements
+// const observer = new MutationObserver(addRephraseButtons);
+// observer.observe(document.body, { subtree: true, childList: true });
